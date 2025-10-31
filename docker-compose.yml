@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  web-server:
+    build: .
+    container_name: web-app-server
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./config:/etc/server/config
+      - ./data:/var/lib/server/data  
+      - ./logs:/var/log/server
+      - ./ssl:/etc/ssl/certs
+    environment:
+      - SERVER_ENV=production
+      - LOG_LEVEL=info
+      - DOMAIN=${DOMAIN:-localhost}
+      - API_TOKEN=${API_TOKEN}
+    networks:
+      - web-network
+      
+  database:
+    image: postgres:15-alpine
+    container_name: web-database  
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=webapp
+      - POSTGRES_USER=webuser
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - web-network
+
+  cache:
+    image: redis:7-alpine
+    container_name: web-cache
+    restart: unless-stopped
+    volumes:
+      - cache_data:/data
+    networks:
+      - web-network
+
+  monitor:
+    image: prom/prometheus:latest
+    container_name: web-monitor
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - web-network
+
+networks:
+  web-network:
+    driver: bridge
+
+volumes:
+  db_data:
+  cache_data:
+  prometheus_data:

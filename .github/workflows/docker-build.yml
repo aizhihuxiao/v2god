@@ -1,0 +1,73 @@
+name: Build and Push to Docker Hub
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:  # 手动触发：更新 NaiveProxy 核心和 Caddy
+    inputs:
+      caddy_version:
+        description: 'Caddy 版本 (latest 或 v2.8.4)'
+        required: false
+        default: 'latest'
+      naive_version:
+        description: 'NaiveProxy 分支 (naive 或特定 commit)'
+        required: false
+        default: 'naive'
+      force_rebuild:
+        description: '强制重新构建 (不使用缓存)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/caddy-nv
+          tags: |
+            type=raw,value=latest
+            type=raw,value={{date 'YYYYMMDD'}}
+            type=sha,prefix={{date 'YYYYMMDD'}}-
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          no-cache: ${{ github.event.inputs.force_rebuild || false }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            CADDY_VERSION=${{ github.event.inputs.caddy_version || 'latest' }}
+            NAIVE_VERSION=${{ github.event.inputs.naive_version || 'naive' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/caddy-nv
+          short-description: "Caddy with Cloudflare DNS support"
+          readme-filepath: ./README.md
