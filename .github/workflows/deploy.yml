@@ -1,20 +1,20 @@
-name: Build and Push to Docker Hub
+name: Build and Deploy Web Server
 
 on:
   push:
     branches: [main, master]
-  workflow_dispatch:  # 手动触发：更新 NaiveProxy 核心和 Caddy
+  workflow_dispatch:  # Manual trigger for updating server components
     inputs:
-      caddy_version:
-        description: 'Caddy 版本 (latest 或 v2.8.4)'
+      server_version:
+        description: 'Server version (latest or v2.8.4)'
         required: false
         default: 'latest'
-      naive_version:
-        description: 'NaiveProxy 分支 (naive 或特定 commit)'
+      plugin_version:
+        description: 'Plugin branch (latest or specific commit)'
         required: false
-        default: 'naive'
+        default: 'latest'
       force_rebuild:
-        description: '强制重新构建 (不使用缓存)'
+        description: 'Force rebuild (no cache)'
         required: false
         type: boolean
         default: true
@@ -42,7 +42,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/caddy-nv
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/v2god
           tags: |
             type=raw,value=latest
             type=raw,value={{date 'YYYYMMDD'}}
@@ -58,8 +58,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            CADDY_VERSION=${{ github.event.inputs.caddy_version || 'latest' }}
-            NAIVE_VERSION=${{ github.event.inputs.naive_version || 'naive' }}
+            CADDY_VERSION=${{ github.event.inputs.server_version || 'latest' }}
+            NAIVE_VERSION=${{ github.event.inputs.plugin_version || 'naive' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
@@ -68,6 +68,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/caddy-nv
-          short-description: "Caddy with Cloudflare DNS support"
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/v2god
+          short-description: "Enterprise Web Application Platform - High-performance web server"
           readme-filepath: ./README.md
