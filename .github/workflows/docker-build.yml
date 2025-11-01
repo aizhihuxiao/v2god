@@ -10,10 +10,6 @@ on:
       - '.github/workflows/docker-build.yml'
   workflow_dispatch:  # Manual trigger for updating components
     inputs:
-      server_version:
-        description: 'Server version (latest or specific)'
-        required: false
-        default: 'latest'
       plugin_version:
         description: 'Plugin version (naive or specific)'
         required: false
@@ -64,7 +60,6 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            SERVER_VERSION=${{ github.event.inputs.server_version || 'latest' }}
             PLUGIN_VERSION=${{ github.event.inputs.plugin_version || 'naive' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

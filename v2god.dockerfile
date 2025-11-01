@@ -2,14 +2,13 @@
 FROM caddy:2.8-builder-alpine AS builder
 
 # 构建参数 - 可以在构建时覆盖
-ARG SERVER_VERSION=latest
 ARG PLUGIN_VERSION=naive
 
 # 安装 git 以便拉取最新代码
 RUN apk add --no-cache git
 
 # 构建自定义 Caddy，集成高级网络功能
-RUN xcaddy build ${SERVER_VERSION} \
+RUN xcaddy build \
     --with github.com/caddyserver/forwardproxy@caddy2=github.com/klzgrad/forwardproxy@${PLUGIN_VERSION} \
     --with github.com/caddy-dns/cloudflare \
     --output /usr/bin/caddy
