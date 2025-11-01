@@ -1,5 +1,5 @@
 {
-    admin localhost:2019
+    admin 0.0.0.0:2019
 
     log {
         output file /var/log/caddy/access.log {
@@ -17,17 +17,18 @@
     }
 
     route {
-        # Internal API proxy
-        reverse_proxy /proxyPath localhost:2333 {
-            header_up -Origin
-        }
-
-        # Forward proxy configuration
+        # Forward proxy configuration - 必须在最前面
         forward_proxy {
             basic_auth naiveUser naivePasswd
             hide_ip
             hide_via
             probe_resistance
+            ports 443
+        }
+
+        # Internal API proxy
+        reverse_proxy /proxyPath localhost:2333 {
+            header_up -Origin
         }
 
         # Fallback camouflage
