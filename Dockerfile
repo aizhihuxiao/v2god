@@ -53,9 +53,6 @@ RUN apk add --no-cache \
     # 设置时区
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
-    # 创建非 root 用户
-    addgroup -g 1000 caddy && \
-    adduser -D -u 1000 -G caddy caddy && \
     # 创建目录结构
     mkdir -p \
         /config/caddy \
@@ -63,18 +60,14 @@ RUN apk add --no-cache \
         /var/log/caddy \
         /etc/caddy \
         /etc/sing-box \
-        /var/log/sing-box && \
-    # 设置目录权限
-    chown -R caddy:caddy /config /data /var/log/caddy /etc/caddy /etc/sing-box /var/log/sing-box
+        /var/log/sing-box
 
 # 复制编译好的 caddy 和 sing-box
 COPY --from=builder /usr/bin/caddy /usr/bin/caddy
 COPY --from=builder /usr/bin/sing-box /usr/bin/sing-box
 
 # 设置权限并验证版本
-RUN setcap cap_net_bind_service=+ep /usr/bin/caddy && \
-    setcap cap_net_bind_service=+ep /usr/bin/sing-box && \
-    chmod +x /usr/bin/caddy /usr/bin/sing-box && \
+RUN chmod +x /usr/bin/caddy /usr/bin/sing-box && \
     caddy version && \
     caddy list-modules | grep forward_proxy && \
     sing-box version
@@ -118,18 +111,14 @@ RUN echo '#!/bin/sh' > /usr/local/bin/docker-entrypoint.sh && \
     echo 'fi' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'echo "🚀 Starting Caddy..."' >> /usr/local/bin/docker-entrypoint.sh && \
     echo 'exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile' >> /usr/local/bin/docker-entrypoint.sh && \
-    chmod +x /usr/local/bin/docker-entrypoint.sh && \
-    chown caddy:caddy /usr/local/bin/docker-entrypoint.sh
-
-# 切换到非 root 用户（安全性）
-USER caddy
+    chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # 工作目录
 WORKDIR /config/caddy
 
 # 健康检查 - 检查 Caddy 进程是否运行
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD pgrep caddy > /dev/null || exit 1
+    CMD pgrep -x caddy > /dev/null || exit 1
 
-# 启动命令 - 同时运行 Caddy 和 sing-box
+# 启动命令 - 同时运行 Caddy 和 sing-box（以 root 运行）
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
