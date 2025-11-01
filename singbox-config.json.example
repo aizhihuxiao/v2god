@@ -12,63 +12,26 @@
       "users": [
         {
           "uuid": "REALITY_UUID",
-          "flow": "xtls-rprx-vision"
+          "flow": ""
         }
       ],
       "tls": {
         "enabled": true,
-        "server_name": "REALITY_SERVER_NAME",
-        "reality": {
-          "enabled": true,
-          "handshake": {
-            "server": "REALITY_SERVER_NAME",
-            "server_port": 443
-          },
-          "private_key": "REALITY_PRIVATE_KEY",
-          "short_id": [
-            "REALITY_SHORT_ID"
-          ]
-        }
+        "server_name": "REALITY_SNI",
+        "certificate_path": "/data/caddy/certificates/acme.zerossl.com-v2-dv90/wildcard_.domain/wildcard_.domain.crt",
+        "key_path": "/data/caddy/certificates/acme.zerossl.com-v2-dv90/wildcard_.domain/wildcard_.domain.key",
+        "min_version": "1.2",
+        "max_version": "1.3"
       }
-    },
-    {
-      "type": "redirect",
-      "tag": "redirect-in",
-      "listen": "::",
-      "listen_port": 80
     }
   ],
   "outbounds": [
     {
       "type": "direct",
       "tag": "direct"
-    },
-    {
-      "type": "block",
-      "tag": "block"
     }
   ],
   "route": {
-    "rules": [
-      {
-        "inbound": "redirect-in",
-        "outbound": "direct"
-      },
-      {
-        "ip_cidr": [
-          "10.0.0.0/8",
-          "172.16.0.0/12",
-          "192.168.0.0/16",
-          "127.0.0.0/8",
-          "169.254.0.0/16",
-          "224.0.0.0/4",
-          "240.0.0.0/4",
-          "fc00::/7",
-          "fe80::/10"
-        ],
-        "outbound": "block"
-      }
-    ],
     "final": "direct"
   }
 }
