@@ -31,8 +31,10 @@ RUN ARCH=$(uname -m) && \
     echo "Latest version: ${SINGBOX_VERSION}" && \
     curl -Lo /tmp/sing-box.tar.gz "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-${ARCH}.tar.gz" && \
     tar -xzf /tmp/sing-box.tar.gz -C /tmp && \
-    mv /tmp/sing-box-*/sing-box /usr/bin/sing-box && \
+    find /tmp -name "sing-box" -type f -executable && \
+    cp $(find /tmp -name "sing-box" -type f -executable | head -1) /usr/bin/sing-box && \
     chmod +x /usr/bin/sing-box && \
+    /usr/bin/sing-box version && \
     rm -rf /tmp/sing-box*
 
 # 运行阶段 - 使用固定版本
