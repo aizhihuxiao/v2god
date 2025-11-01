@@ -3,8 +3,8 @@
 	email admin@domain
 }
 
-# Caddy HTTPS 服务 - NaiveProxy (监听 443，使用具体域名)
-*.domain, domain {
+# Caddy HTTPS 服务 - NaiveProxy (只使用泛域名证书)
+*.domain {
 	tls {
 		dns cloudflare cloudflareApiToken
 	}
