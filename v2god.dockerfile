@@ -9,8 +9,9 @@ ARG NAIVE_VERSION=naive
 RUN apk add --no-cache git
 
 # 构建自定义 Caddy，使用最新的 NaiveProxy 核心
-RUN xcaddy build ${CADDY_VERSION} \
-    --with github.com/caddyserver/forwardproxy@caddy2=github.com/klzgrad/forwardproxy@${NAIVE_VERSION} \
+# 不指定Caddy版本，让xcaddy使用最新稳定版
+RUN xcaddy build \
+    --with github.com/caddyserver/forwardproxy@caddy2=github.com/klzgrad/forwardproxy@naive \
     --with github.com/caddy-dns/cloudflare \
     --output /usr/bin/caddy
 
