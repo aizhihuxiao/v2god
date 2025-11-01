@@ -1,11 +1,16 @@
 # 构建阶段 - 使用固定版本，更可靠
 FROM caddy:2.8-builder-alpine AS builder
 
+# 构建参数 - 可以在构建时覆盖
+ARG CADDY_VERSION=latest
+ARG NAIVE_VERSION=naive
+
 # 安装 git 以便拉取最新代码
 RUN apk add --no-cache git
 
-# 构建自定义 Caddy - 只包含cloudflare DNS
-RUN xcaddy build \
+# 构建自定义 Caddy，使用最新的 NaiveProxy 核心
+RUN xcaddy build ${CADDY_VERSION} \
+    --with github.com/caddyserver/forwardproxy@caddy2=github.com/klzgrad/forwardproxy@${NAIVE_VERSION} \
     --with github.com/caddy-dns/cloudflare \
     --output /usr/bin/caddy
 
@@ -14,7 +19,7 @@ FROM alpine:3.19
 
 # 元数据
 LABEL maintainer="your-email@example.com" \
-      description="Modern Web Server with Enhanced Network Features" \
+      description="Caddy with NaiveProxy and Cloudflare DNS" \
       version="1.0"
 
 # 一次性安装所有依赖并创建目录，减少镜像层
@@ -64,9 +69,9 @@ USER caddy
 # 工作目录
 WORKDIR /config/caddy
 
-# 健康检查 - 检查Caddy进程是否运行
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD caddy version || exit 1
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:2019/config/ || exit 1
 
 # 启动命令
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

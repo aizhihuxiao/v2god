@@ -10,6 +10,14 @@ on:
       - '.github/workflows/docker-build.yml'
   workflow_dispatch:  # Manual trigger for updating components
     inputs:
+      caddy_version:
+        description: 'Caddy version (latest or specific)'
+        required: false
+        default: 'latest'
+      naive_version:
+        description: 'NaiveProxy version (naive or specific)'
+        required: false
+        default: 'naive'
       force_rebuild:
         description: 'Force rebuild (no cache)'
         required: false
@@ -55,6 +63,9 @@ jobs:
           no-cache: ${{ github.event.inputs.force_rebuild || false }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            CADDY_VERSION=${{ github.event.inputs.caddy_version || 'latest' }}
+            NAIVE_VERSION=${{ github.event.inputs.naive_version || 'naive' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
