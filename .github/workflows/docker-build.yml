@@ -67,12 +67,3 @@ jobs:
             NAIVE_VERSION=${{ github.event.inputs.naive_version || 'naive' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
-      - name: Update Docker Hub description
-        uses: peter-evans/dockerhub-description@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/v2god
-          short-description: "V2God - Modern Web Server with Enhanced Features"
-          readme-filepath: ./README.md
