@@ -24,7 +24,7 @@
 	email admin@domain
 }
 
-:443, *.domain, domain {
+*.domain, domain {
 	tls {
 		dns cloudflare cloudflareApiToken
 		
