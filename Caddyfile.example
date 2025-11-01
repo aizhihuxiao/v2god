@@ -23,7 +23,6 @@
             hide_ip
             hide_via
             probe_resistance
-            ports 443
         }
 
         # Internal API proxy
