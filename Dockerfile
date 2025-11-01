@@ -117,8 +117,8 @@ RUN echo '#!/bin/sh' > /usr/local/bin/docker-entrypoint.sh && \
 WORKDIR /config/caddy
 
 # 健康检查 - 检查 Caddy 进程是否运行
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD pgrep -x caddy > /dev/null || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+    CMD pgrep caddy >/dev/null 2>&1 && exit 0 || exit 1
 
 # 启动命令 - 同时运行 Caddy 和 sing-box（以 root 运行）
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
