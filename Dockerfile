@@ -85,10 +85,41 @@ ENV XDG_CONFIG_HOME=/config \
     TZ=Asia/Shanghai
 
 # 暴露端口
-EXPOSE 80 443 2019 8443 8444
+EXPOSE 80 443 2019 8443
 
 # 数据卷
 VOLUME ["/config", "/data", "/var/log/caddy", "/etc/sing-box", "/var/log/sing-box"]
+
+# 创建启动脚本
+RUN echo '#!/bin/sh' > /usr/local/bin/docker-entrypoint.sh && \
+    echo 'set -e' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'echo "========================================="' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'echo "Starting Caddy + sing-box container"' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'echo "========================================="' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'if [ ! -f "/etc/caddy/Caddyfile" ]; then' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "❌ ERROR: /etc/caddy/Caddyfile not found!"' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  exit 1' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'fi' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'if ! caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile 2>&1; then' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "❌ ERROR: Caddyfile validation failed!"' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  exit 1' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'fi' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'if [ -f "/etc/sing-box/config.json" ]; then' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "🚀 Starting sing-box..."' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  sing-box run -c /etc/sing-box/config.json > /var/log/sing-box/sing-box.log 2>&1 &' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  SINGBOX_PID=$!' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  echo "✅ sing-box started with PID: $SINGBOX_PID"' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  sleep 2' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  if ! kill -0 $SINGBOX_PID 2>/dev/null; then' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    echo "❌ sing-box failed to start!"' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    cat /var/log/sing-box/sing-box.log' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '    exit 1' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo '  fi' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'fi' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'echo "🚀 Starting Caddy..."' >> /usr/local/bin/docker-entrypoint.sh && \
+    echo 'exec caddy run --config /etc/caddy/Caddyfile --adapter caddyfile' >> /usr/local/bin/docker-entrypoint.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh && \
+    chown caddy:caddy /usr/local/bin/docker-entrypoint.sh
 
 # 切换到非 root 用户（安全性）
 USER caddy
@@ -96,13 +127,9 @@ USER caddy
 # 工作目录
 WORKDIR /config/caddy
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:2019/config/ || exit 1
-
-# 启动脚本
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# 健康检查 - 检查 Caddy 进程是否运行
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD pgrep caddy > /dev/null || exit 1
 
 # 启动命令 - 同时运行 Caddy 和 sing-box
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
