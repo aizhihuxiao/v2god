@@ -4,14 +4,14 @@ A modern web server solution based on Caddy, featuring Cloudflare DNS integratio
 
 ## Features
 
-- ✅ **Modern Architecture** - High-performance web server
-- ✅ **DNS Integration** - Automated wildcard SSL certificate provisioning  
-- ✅ **Auto Updates** - Continuous integration with latest upstream
-- ✅ **Network Optimization** - Enhanced TCP stack with modern congestion control
-- ✅ **Security Focused** - Non-privileged execution with minimal dependencies
-- ✅ **Multi-Platform** - Native support for amd64 and arm64 architectures
+- ✁E**Modern Architecture** - High-performance web server
+- ✁E**DNS Integration** - Automated wildcard SSL certificate provisioning  
+- ✁E**Auto Updates** - Continuous integration with latest upstream
+- ✁E**Network Optimization** - Enhanced TCP stack with modern congestion control
+- ✁E**Security Focused** - Non-privileged execution with minimal dependencies
+- ✁E**Multi-Platform** - Native support for amd64 and arm64 architectures
 
-## 快速开始
+## 快速开姁E
 
 ### 1. Configuration Setup
 
@@ -58,7 +58,7 @@ docker run -d --name web-server \
     -v server_data:/data/caddy \
     -v server_config:/config \
     -v server_logs:/var/log/caddy \
-    aizhihuxiao/caddy-nv:latest
+    aizhihuxiao/v2god:latest
 ```
 
 ### 3. Automated Deployment
@@ -85,9 +85,9 @@ chmod +x setup-interactive.sh
 | `AUTH_USER` | Authentication username | `admin` |
 | `AUTH_PASS` | Authentication password | `secure_password` |
 
-## 目录说明
+## 目录说昁E
 
-- `/etc/caddy/Caddyfile` - Caddy 配置文件
+- `/etc/caddy/Caddyfile` - Caddy 配置斁E��
 - `/data/caddy` - 证书和数据存储
 - `/config` - 配置存储
 - `/var/log/caddy` - 日志文件
@@ -137,7 +137,7 @@ Example client configuration for enhanced routing:
 
 ```bash
 # Pull latest version
-docker pull aizhihuxiao/caddy-nv:latest
+docker pull aizhihuxiao/v2god:latest
 
 # Restart container
 docker restart web-server
@@ -162,11 +162,11 @@ docker build --no-cache -t enhanced-caddy:latest .
 
 ## Security Recommendations
 
-- ✅ Use strong authentication credentials
-- ✅ Regularly rotate access credentials  
-- ✅ Configure security groups to allow only necessary ports
-- ✅ Enable CDN services for additional protection
-- ✅ Monitor logs for anomalous traffic patterns
+- ✁EUse strong authentication credentials
+- ✁ERegularly rotate access credentials  
+- ✁EConfigure security groups to allow only necessary ports
+- ✁EEnable CDN services for additional protection
+- ✁EMonitor logs for anomalous traffic patterns
 
 ## Troubleshooting
 

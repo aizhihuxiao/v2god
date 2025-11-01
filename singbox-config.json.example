@@ -8,7 +8,7 @@
       "type": "vless",
       "tag": "vless-in",
       "listen": "::",
-      "listen_port": 443,
+      "listen_port": 8443,
       "users": [
         {
           "uuid": "REALITY_UUID",
@@ -29,10 +29,6 @@
             "REALITY_SHORT_ID"
           ]
         }
-      },
-      "fallback": {
-        "server": "127.0.0.1",
-        "server_port": 8443
       }
     },
     {

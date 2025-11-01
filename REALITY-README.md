@@ -1,14 +1,14 @@
-# 🚀 Caddy NaiveProxy + sing-box Reality 443端口复用部署指南
+# 🚀 Caddy NaiveProxy + sing-box Reality 双协议部署指南
 
 ## 📋 项目简介
 
 本项目在 Caddy + NaiveProxy 的基础上集成了 **sing-box Reality 协议**，实现：
 
 - ✅ **NaiveProxy** (Caddy Forward Proxy) - 443端口
-- ✅ **Reality** (VLESS + XTLS Reality) - 443端口（共享）
-- ✅ 通过 **sing-box fallback** 机制自动分流
-- ✅ 共享同一个域名，无需额外 DNS 配置
-- ✅ 多 CA 智能切换，解决证书限制问题
+- ✅ **Reality** (VLESS + XTLS Reality) - 8443端口
+- ✅ 两个协议独立工作，互不干扰
+- ✅ 使用同一个域名，简化配置
+- ✅ 多CA 智能切换，解决证书限制问题
 
 ## 🏗️ 架构说明
 
@@ -17,60 +17,52 @@
                         ↓
                   Your Domain (99gtr.com)
                         ↓
-                    Port 443
-                        ↓
-              ┌─────────────────┐
-              │    sing-box     │
-              │ (Reality 检测)   │
-              └────────┬─────────┘
-                       │
-        ┌──────────────┴──────────────┐
-        │                             │
-   Reality 流量                 其他流量 (fallback)
-        │                             │
-        ↓                             ↓
-  Reality 处理              ┌─────────────────┐
-   (sing-box)               │  Caddy (8443)   │
-                            │  NaiveProxy     │
-                            └─────────────────┘
+          ┌─────────────┴──────────────┐
+          │                            │
+      Port 443                      Port 8443
+          │                            │
+          ↓                            ↓
+  ┌─────────────────┐        ┌─────────────────┐
+  │     Caddy       │        │    sing-box     │
+  │  (NaiveProxy)   │        │    (Reality)    │
+  │  HTTPS + Proxy  │        │  VLESS+Reality  │
+  └─────────────────┘        └─────────────────┘
 ```
 
 ### 工作原理
 
-1. **sing-box 监听 443 端口**
-2. **检测是否为 Reality 协议流量**
-   - 是 Reality → sing-box 直接处理
-   - 不是 Reality → fallback 到 Caddy (端口 8443)
-3. **Caddy 处理 NaiveProxy 流量**
-4. **完全透明，使用同一个域名**
+1. **Caddy 监听 443 端口** - 处理 NaiveProxy 流量（主要用途）
+2. **sing-box 监听 8443 端口** - 处理 Reality 协议流量
+3. **两个服务独立运行，互不干扰**
+4. **使用同一个域名，不同端口**
 
 ### 端口分配
 
-| 服务 | 外部端口 | 内部端口 | 协议 | 用途 |
-|------|---------|---------|------|------|
-| sing-box | 443 | - | VLESS+Reality | Reality + 流量分发 |
-| Caddy HTTPS | - | 8443 | HTTPS | NaiveProxy 服务 |
-| Caddy HTTP | 80 | - | HTTP | 自动重定向 |
+| 服务 | 外部端口 | 协议 | 用途 |
+|------|---------|------|------|
+| Caddy HTTPS | 443 | HTTPS | NaiveProxy 服务 |
+| sing-box | 8443 | VLESS+Reality | Reality 协议 |
+| Caddy HTTP | 80 | HTTP | 自动重定向 |
 
 ## 🚀 快速开始
 
 ### 1. 部署服务
 
-#### 方式 A: 使用默认配置（推荐）
+#### 方式A: 使用默认配置（推荐）
 
 ```bash
 chmod +x run.sh
 ./run.sh
 ```
 
-#### 方式 B: 交互式部署
+#### 方式B: 交互式部署
 
 ```bash
 chmod +x run-interactive.sh
 ./run-interactive.sh
 ```
 
-#### 方式 C: Naicha 配置
+#### 方式C: Naicha 配置
 
 ```bash
 chmod +x run-naicha.sh
@@ -94,8 +86,9 @@ Reality 配置信息
 
 服务器信息:
 域名: 99gtr.com
-端口: 443 (与 NaiveProxy 共享)
-伪装域名: www.microsoft.com
+端口: 8443
+Reality SNI: 99gtr.com
+握手伪装域名: www.catalog.update.microsoft.com
 
 密钥信息:
 UUID: 12345678-1234-1234-1234-123456789012
@@ -104,35 +97,34 @@ Public Key: eSyY2BcdvGOJxglH4zJJGM4iCPPJPQf7MFu1ItHkxAg
 Short ID: abc12345
 
 ========================================
-工作原理:
-1. sing-box 监听 443 端口
-2. Reality 协议流量由 sing-box 处理
-3. 非 Reality 流量自动 fallback 到 Caddy (NaiveProxy)
-4. 使用同一个域名，无需额外 DNS 配置
+架构说明:
+1. Caddy 监听 443 端口 (NaiveProxy)
+2. sing-box 监听 8443 端口 (Reality)
+3. 两个协议独立工作，互不干扰
+4. UUID 与 NaiveProxy 密码统一管理
 
 客户端配置:
 - 地址: 99gtr.com
-- 端口: 443
+- 端口: 8443
 - UUID: 12345678-1234-1234-1234-123456789012
 - Public Key: eSyY2BcdvGOJxglH4zJJGM4iCPPJPQf7MFu1ItHkxAg
 - Short ID: abc12345
-- SNI: 99gtr.com (与主域名相同)
-- Server Name: www.microsoft.com
+- SNI: 99gtr.com
+- Server Name: www.catalog.update.microsoft.com
 - Flow: xtls-rprx-vision
 ========================================
 ```
 
 ### 3. 配置防火墙
 
-在云服务商控制台**只需开放**以下端口：
+在云服务商控制台开放以下端口：
 
 ```bash
 22/tcp    # SSH
 80/tcp    # HTTP (自动跳转)
-443/tcp   # HTTPS (NaiveProxy + Reality 共享)
+443/tcp   # HTTPS (NaiveProxy)
+8443/tcp  # Reality
 ```
-
-**无需额外 DNS 配置！使用同一个域名即可。**
 
 ## 📱 客户端配置
 
@@ -177,7 +169,7 @@ Short ID: abc12345
 
 ```
 地址(address): 99gtr.com
-端口(port): 443
+端口(port): 8443
 用户ID(id): [从 reality-info.txt 复制 UUID]
 流控(flow): xtls-rprx-vision
 加密(encryption): none
@@ -187,12 +179,10 @@ Short ID: abc12345
 Reality 设置:
   Public Key: [从 reality-info.txt 复制]
   Short ID: [从 reality-info.txt 复制]
-  SNI: 99gtr.com (与主域名相同)
-  Server Name: www.microsoft.com (伪装域名)
+  SNI: 99gtr.com
+  Server Name: www.catalog.update.microsoft.com
   Fingerprint: chrome
 ```
-
-**关键点：使用主域名，sing-box 会自动识别 Reality 流量**
 
 #### sing-box 配置
 
@@ -205,7 +195,7 @@ Reality 设置:
       "type": "vless",
       "tag": "reality-out",
       "server": "99gtr.com",
-      "server_port": 443,
+      "server_port": 8443,
       "uuid": "YOUR_UUID",
       "flow": "xtls-rprx-vision",
       "tls": {
@@ -222,8 +212,6 @@ Reality 设置:
 }
 ```
 
-**注意：`server_name` 使用主域名 `99gtr.com`**
-
 #### Clash Meta 配置
 
 `config.yaml`:
@@ -233,7 +221,7 @@ proxies:
   - name: "Reality"
     type: vless
     server: 99gtr.com
-    port: 443
+    port: 8443
     uuid: YOUR_UUID
     network: tcp
     udp: true
@@ -245,8 +233,6 @@ proxies:
       short-id: YOUR_SHORT_ID
     client-fingerprint: chrome
 ```
-
-**注意：`servername` 使用主域名 `99gtr.com`**
 
 ## 🔧 管理命令
 
@@ -306,11 +292,11 @@ chmod +x setup-reality.sh
 
 ### Reality 连接失败
 
-1. **检查 sing-box 是否监听 443**
+1. **检查 sing-box 是否监听 8443**
    ```bash
    # 在服务器上测试
-   netstat -tlnp | grep :443
-   # 应该看到 sing-box 监听 443
+   netstat -tlnp | grep :8443
+   # 应该看到 sing-box 监听 8443
    ```
 
 2. **检查 sing-box 运行状态**
@@ -319,10 +305,9 @@ chmod +x setup-reality.sh
    docker exec caddy cat /var/log/sing-box/sing-box.log
    ```
 
-3. **检查 fallback 是否工作**
+3. **检查防火墙**
    ```bash
-   # 检查 Caddy 是否在 8443 监听
-   docker exec caddy netstat -tlnp | grep :8443
+   # 确保 8443 端口已在云控制台开放
    ```
 
 4. **测试 Reality 连接**
@@ -334,7 +319,7 @@ chmod +x setup-reality.sh
 5. **查看 sing-box 配置**
    ```bash
    docker exec caddy cat /etc/sing-box/config.json
-   # 确认 fallback 配置正确
+   # 确认端口为 8443
    ```
 
 ### NaiveProxy 连接失败
@@ -356,7 +341,7 @@ chmod +x setup-reality.sh
 
 ### 证书申请失败
 
-使用多 CA 智能切换：
+使用多CA 智能切换：
 
 ```bash
 chmod +x cert-manager.sh
@@ -392,7 +377,7 @@ sysctl net.ipv4.tcp_fastopen
 
 ## 🔒 安全建议
 
-1. **定期更换密码和 UUID**
+1. **定期更换密钥和 UUID**
    ```bash
    # 生成新的 UUID
    cat /proc/sys/kernel/random/uuid
@@ -403,12 +388,12 @@ sysctl net.ipv4.tcp_fastopen
    ufw allow 22/tcp
    ufw allow 80/tcp
    ufw allow 443/tcp
-   ufw allow 4443/tcp
+   ufw allow 8443/tcp
    ufw enable
    ```
 
 3. **使用强密码**
-   - Naive 用户名/密码应使用复杂字符
+   - Naive 用户名密码应使用复杂字符
    - Reality UUID 使用随机生成
 
 4. **定期查看日志**
@@ -416,11 +401,11 @@ sysctl net.ipv4.tcp_fastopen
    docker logs caddy --tail 100
    ```
 
-## 🆚 协议对比
+## ⚖️ 协议对比
 
 | 特性 | NaiveProxy | Reality |
 |------|------------|---------|
-| 伪装效果 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| 伪装性 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 | 速度 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 | 客户端支持 | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
 | 配置难度 | 简单 | 简单 |
@@ -454,6 +439,7 @@ reality_server_name="www.apple.com"  # 修改为你想要的域名
 - `www.apple.com`
 - `www.cloudflare.com`
 - `www.amazon.com`
+- `www.catalog.update.microsoft.com`
 
 ### 修改 Reality 端口
 
@@ -477,7 +463,7 @@ enable_reality="false"
 
 1. 修改 `singbox-config.json.example` 中的端口为 443
 2. 移除 Caddy 容器启动命令
-3. 仅启动 sing-box
+3. 单独启动 sing-box
 
 ## 🔄 更新说明
 
@@ -491,7 +477,7 @@ docker stop caddy watchtower
 docker rm caddy watchtower
 
 # 拉取最新镜像
-docker pull aizhihuxiao/caddy-nv:latest
+docker pull aizhihuxiao/v2god:latest
 
 # 重新部署
 ./run.sh
@@ -503,49 +489,50 @@ Watchtower 已自动启动，每 24 小时检查一次更新。
 
 ## ❓ 常见问题
 
-**Q: 为什么 Reality 要用子域名 SNI？**  
-A: 因为 Caddy Layer4 通过 SNI 来分流。主域名 `99gtr.com` 用于 NaiveProxy，子域名 `reality.99gtr.com` 用于 Reality。这样可以共享 443 端口。
+**Q: 为什么 Reality 使用 8443 端口而不是 443？**  
+A: 为了确保两个协议都能正常工作。NaiveProxy 需要真实的 TLS 证书和 443 端口，Reality 使用独立端口避免冲突。
 
-**Q: 必须配置 DNS 解析吗？**  
-A: 是的！必须将 `reality.99gtr.com` 解析到你的服务器 IP，否则 Reality 无法连接。
+**Q: 需要配置 DNS 解析吗？**  
+A: 是的，需要将你的域名解析到服务器 IP。只需一条 A 记录即可，两个协议共享同一个域名。
 
-**Q: 可以修改 Reality SNI 吗？**  
-A: 可以。编辑 `run.sh` 中的 `reality_sni="reality.99gtr.com"` 改成你想要的子域名，比如 `vless.99gtr.com`。
+**Q: 可以修改 Reality 端口吗？**  
+A: 可以。编辑 `run.sh` 中的 `reality_port="8443"` 改成你想要的端口，比如 `4443`。
 
-**Q: NaiveProxy 和 Reality 真的共享 443 端口吗？**  
-A: 是的！Caddy Layer4 在 TLS 握手阶段检查 SNI，根据不同的 SNI 转发到不同的后端服务。
+**Q: NaiveProxy 和 Reality 真的独立工作吗？**  
+A: 是的。Caddy 在 443 处理 NaiveProxy，sing-box 在 8443 处理 Reality，两者完全独立，互不干扰。
 
-**Q: 为什么不直接用独立端口？**  
-A: 共享 443 端口的好处：
-- 只需开放一个端口
-- 更隐蔽，不易被检测
-- 充分利用 443 端口的特性
+**Q: 为什么不用 fallback 机制共享 443 端口？**  
+A: fallback 机制会在 sing-box 进行 TLS 终止，导致 Caddy 无法获得真实的 TLS 握手，NaiveProxy 需要完整的 TLS 连接才能正常工作。
 
 **Q: 客户端连接时要注意什么？**  
-A: **最重要的是 SNI！**
-- NaiveProxy: SNI 使用主域名 `99gtr.com`
-- Reality: SNI 使用子域名 `reality.99gtr.com`
+A: **最重要的是端口：**
+- NaiveProxy: 端口 443
+- Reality: 端口 8443
 
-**Q: 如果 DNS 不想暴露子域名怎么办？**  
-A: 可以使用泛域名解析 `*.99gtr.com`，这样任何子域名都指向服务器，更灵活。
+**Q: 可以只用 Reality 不用 NaiveProxy 吗？**  
+A: 可以。设置 `enable_reality="true"` 并修改 Reality 端口为 443，然后不启动 Caddy 即可。
 
 ## 📝 更新日志
 
-### 2025-11-01
+### 2025-01-XX - 架构优化
+- ✅ 调整架构：Caddy 443 + sing-box 8443
+- ✅ 移除 fallback 机制，改为独立端口
+- ✅ 确保 NaiveProxy 和 Reality 都能正常工作
+- ✅ 简化配置，提高稳定性
+- ✅ 添加 reality_port 变量支持自定义端口
+
+### 2025-11-01 - 初始版本
 - ✅ 集成 sing-box Reality 协议
-- ✅ 实现 443 端口复用（NaiveProxy + Reality）
-- ✅ 使用 Caddy Layer4 进行 SNI 分流
-- ✅ Reality 通过子域名 SNI 区分流量
+- ✅ 实现双协议支持（NaiveProxy + Reality）
 - ✅ 自动生成 Reality 密钥
 - ✅ 添加完整客户端配置示例
 - ✅ 保持 NaiveProxy 功能不变
-- ✅ 只需开放 443 端口，无需额外端口
+- ✅ 多CA 智能切换支持
 
 ---
 
 **部署完成后别忘记：**
-1. ✅ 添加 DNS 解析：`reality.99gtr.com` → 服务器IP
-2. ✅ 检查 `./singbox/reality-info.txt` 获取 Reality 配置
-3. ✅ 在云控制台只需开放 80 和 443 端口
-4. ✅ 客户端配置时注意 SNI 区分
-5. ✅ 测试两个协议是否都能正常连接
+1. ✅ 检查 `./singbox/reality-info.txt` 获取 Reality 配置
+2. ✅ 在云控制台开放 80、443 和 8443 端口
+3. ✅ 客户端配置时注意端口区分
+4. ✅ 测试两个协议是否都能正常连接

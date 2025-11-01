@@ -42,3 +42,6 @@ certificates/
 *.tmp
 *.bak
 *.old
+*.rar
+*.zip
+*.tar.gz
