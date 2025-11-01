@@ -15,8 +15,9 @@ services:
       - "2019:2019"  # Caddy admin API
     volumes:
       - ./caddy:/etc/caddy
+      - ./certificates:/data/caddy/certificates
       - ./data/caddy:/data/caddy
-      - ./data/caddy:/config/caddy
+      - ./config/caddy:/config/caddy
       - ./logs/caddy:/var/log/caddy
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
