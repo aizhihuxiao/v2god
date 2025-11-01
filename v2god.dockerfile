@@ -4,10 +4,10 @@ FROM caddy:2.8-builder-alpine AS builder
 # 安装 git 以便拉取最新代码
 RUN apk add --no-cache git
 
-# 构建自定义 Caddy，集成高级网络功能
-# 使用replace指令替换官方forwardproxy为特殊版本
+# 构建自定义 Caddy
+# 先安装forwardproxy，使用官方caddy2分支
 RUN xcaddy build \
-    --with github.com/caddyserver/forwardproxy=github.com/klzgrad/forwardproxy@naive \
+    --with github.com/caddyserver/forwardproxy@caddy2 \
     --with github.com/caddy-dns/cloudflare \
     --output /usr/bin/caddy
 
