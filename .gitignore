@@ -41,3 +41,19 @@ certificates/
 *.tmp
 *.bak
 *.old
+
+# 压缩文件（可能包含敏感信息）
+*.rar
+*.zip
+*.7z
+*.tar.gz
+
+# 私有配置和密钥
+secrets/
+private/
+*.secret
+*.token
+
+# 日志文件
+logs/
+*.log
