@@ -11,26 +11,24 @@
     }
 }
 
-:443, *.domain, domain {
-    tls {
-        dns cloudflare cloudflareApiToken
+:443, *.domain, domain
+tls {
+    dns cloudflare cloudflareApiToken
+}
+route {
+    reverse_proxy /proxyPath localhost:2333 {
+        header_up -Origin
     }
 
-    route {
-        reverse_proxy /proxyPath localhost:2333 {
-            header_up -Origin
-        }
+    forward_proxy {
+        basic_auth naive_user naive_passwd
+        hide_ip
+        hide_via
+        probe_resistance
+    }
 
-        forward_proxy {
-            basic_auth naive_user naive_passwd
-            hide_ip
-            hide_via
-            probe_resistance
-        }
-
-        reverse_proxy https://www.catalog.update.microsoft.com {
-            header_up Host {upstream_hostport}
-            header_up X-Forward-Host {host}
-        }
+    reverse_proxy https://www.catalog.update.microsoft.com {
+        header_up Host {upstream_hostport}
+        header_up X-Forward-Host {host}
     }
 }
