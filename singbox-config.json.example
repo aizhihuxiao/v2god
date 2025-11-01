@@ -5,13 +5,14 @@
   },
   "inbounds": [
     {
-      "type": "vless",
-      "tag": "vless-in",
+      "type": "anytls",
+      "tag": "anytls-in",
       "listen": "::",
       "listen_port": 8443,
       "users": [
         {
-          "uuid": "REALITY_UUID"
+          "name": "REALITY_UUID",
+          "password": "REALITY_UUID"
         }
       ],
       "tls": {
@@ -19,9 +20,6 @@
         "server_name": "REALITY_SNI",
         "certificate_path": "/data/caddy/certificates/acme.zerossl.com-v2-dv90/wildcard_.domain/wildcard_.domain.crt",
         "key_path": "/data/caddy/certificates/acme.zerossl.com-v2-dv90/wildcard_.domain/wildcard_.domain.key"
-      },
-      "transport": {
-        "type": "tcp"
       }
     }
   ],
