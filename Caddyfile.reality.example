@@ -1,14 +1,11 @@
 {
 	debug
 	email admin@domain
+	acme_dns cloudflare cloudflareApiToken
 }
 
 # Caddy HTTPS 服务 - NaiveProxy (只使用泛域名证书)
-*.domain {
-	tls {
-		dns cloudflare cloudflareApiToken
-	}
-	
+:443, *.domain {
 	route {
 		forward_proxy {
 			basic_auth naive_user naive_passwd
