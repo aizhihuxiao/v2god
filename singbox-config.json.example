@@ -11,17 +11,17 @@
       "listen_port": 8443,
       "users": [
         {
-          "uuid": "REALITY_UUID",
-          "flow": ""
+          "uuid": "REALITY_UUID"
         }
       ],
       "tls": {
         "enabled": true,
         "server_name": "REALITY_SNI",
         "certificate_path": "/data/caddy/certificates/acme.zerossl.com-v2-dv90/wildcard_.domain/wildcard_.domain.crt",
-        "key_path": "/data/caddy/certificates/acme.zerossl.com-v2-dv90/wildcard_.domain/wildcard_.domain.key",
-        "min_version": "1.2",
-        "max_version": "1.3"
+        "key_path": "/data/caddy/certificates/acme.zerossl.com-v2-dv90/wildcard_.domain/wildcard_.domain.key"
+      },
+      "transport": {
+        "type": "tcp"
       }
     }
   ],
