@@ -18,13 +18,13 @@
 
     route {
         # Internal API proxy
-        reverse_proxy /api/* localhost:2333 {
+        reverse_proxy /proxyPath localhost:2333 {
             header_up -Origin
         }
 
         # Forward proxy configuration
         forward_proxy {
-            basic_auth {env.WEB_USER} {env.WEB_PASSWORD}
+            basic_auth naiveUser naivePasswd
             hide_ip
             hide_via
             probe_resistance
