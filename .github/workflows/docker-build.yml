@@ -10,10 +10,6 @@ on:
       - '.github/workflows/docker-build.yml'
   workflow_dispatch:  # Manual trigger for updating components
     inputs:
-      plugin_version:
-        description: 'Plugin version (naive or specific)'
-        required: false
-        default: 'naive'
       force_rebuild:
         description: 'Force rebuild (no cache)'
         required: false
@@ -59,8 +55,6 @@ jobs:
           no-cache: ${{ github.event.inputs.force_rebuild || false }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            PLUGIN_VERSION=${{ github.event.inputs.plugin_version || 'naive' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
