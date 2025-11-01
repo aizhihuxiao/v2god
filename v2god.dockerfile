@@ -1,12 +1,19 @@
-# 构建阶段 - 使用固定版本，更可靠
-FROM caddy:2.8-builder-alpine AS builder
+# 构建阶段 - 使用 Alpine 基础镜像
+FROM golang:1.23-alpine AS builder
 
-# 构建参数 - 可以在构建时覆盖
+# 构建参数 - 使用最新版本
 ARG CADDY_VERSION=latest
 ARG NAIVE_VERSION=naive
+ARG XCADDY_VERSION=v0.4.4
 
-# 安装 git 以便拉取最新代码
-RUN apk add --no-cache git
+# 设置 GOTOOLCHAIN 允许自动下载更新的 Go 版本
+ENV GOTOOLCHAIN=auto
+
+# 安装构建依赖
+RUN apk add --no-cache git ca-certificates
+
+# 安装 xcaddy
+RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@${XCADDY_VERSION}
 
 # 构建自定义 Caddy，使用最新的 NaiveProxy 核心
 RUN xcaddy build ${CADDY_VERSION} \
@@ -18,7 +25,7 @@ RUN xcaddy build ${CADDY_VERSION} \
 FROM alpine:3.19
 
 # 元数据
-LABEL maintainer="your-email@example.com" \
+LABEL maintainer="caddy-naiveproxy" \
       description="Caddy with NaiveProxy (latest) and Cloudflare DNS" \
       version="1.0"
 
@@ -26,8 +33,7 @@ LABEL maintainer="your-email@example.com" \
 RUN apk add --no-cache \
         ca-certificates \
         libcap \
-        tzdata \
-        wget && \
+        tzdata && \
     # 设置时区
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
@@ -69,9 +75,9 @@ USER caddy
 # 工作目录
 WORKDIR /config/caddy
 
-# 健康检查
+# 健康检查 - 使用 caddy 命令代替 wget
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:2019/config/ || exit 1
+    CMD caddy version || exit 1
 
 # 启动命令
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]

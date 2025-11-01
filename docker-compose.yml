@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: aizhihuxiao/v2god:latest
+    # 如果需要本地构建，取消下面的注释并注释上面的image行
+    # build:
+    #   context: .
+    #   dockerfile: v2god.dockerfile
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2019:2019"  # Caddy admin API
+    volumes:
+      - ./caddy:/etc/caddy
+      - ./certificates:/data/caddy/certificates
+      - ./data/caddy:/data/caddy
+      - ./config/caddy:/config/caddy
+      - ./logs/caddy:/var/log/caddy
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - WEB_USER=${WEB_USER:-webuser}
+      - WEB_PASSWORD=${WEB_PASSWORD}
+    networks:
+      - web-network
+    # 修复CPU配额和内存问题
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 512M
+        reservations:
+          memory: 256M
+    # 增加内核参数来解决缓冲区问题
+    sysctls:
+      - net.core.rmem_max=134217728
+      - net.core.wmem_max=134217728
+      - net.ipv4.tcp_rmem=4096 65536 134217728
+      - net.ipv4.tcp_wmem=4096 65536 134217728
+
+  web-server:
+    build: .
+    container_name: web-app-server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/etc/server/config
+      - ./data:/var/lib/server/data  
+      - ./logs:/var/log/server
+      - ./ssl:/etc/ssl/certs
+    environment:
+      - SERVER_ENV=production
+      - LOG_LEVEL=info
+      - DOMAIN=${DOMAIN:-localhost}
+      - API_TOKEN=${API_TOKEN}
+    networks:
+      - web-network
+      
+  database:
+    image: postgres:15-alpine
+    container_name: web-database  
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=webapp
+      - POSTGRES_USER=webuser
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - web-network
+
+  cache:
+    image: redis:7-alpine
+    container_name: web-cache
+    restart: unless-stopped
+    volumes:
+      - cache_data:/data
+    networks:
+      - web-network
+
+  monitor:
+    image: prom/prometheus:latest
+    container_name: web-monitor
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - web-network
+
+networks:
+  web-network:
+    driver: bridge
+
+volumes:
+  db_data:
+  cache_data:
+  prometheus_data:
+  caddy_data:
+  caddy_config:

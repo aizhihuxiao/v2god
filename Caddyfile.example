@@ -1,21 +1,34 @@
+{
+    admin 0.0.0.0:2019
+
+    log {
+        output file /var/log/caddy/access.log {
+            roll_size 10MB
+            roll_keep 3
+        }
+        level INFO
+        format json
+    }
+}
+
 :443, *.domain, domain
 tls {
-        dns cloudflare cloudflareApiToken
+    dns cloudflare cloudflareApiToken
 }
 route {
-  reverse_proxy /proxyPath localhost:2333 {
-    header_up -Origin
-  }
-  
-  forward_proxy {
-    basic_auth naive_user naive_passwd
-    hide_ip
-    hide_via
-    probe_resistance
-  }
-  
-  reverse_proxy https://www.catalog.update.microsoft.com {
-    header_up Host {upstream_hostport}
-    header_up x-Forward-Host {host}
-  }
+    reverse_proxy /proxyPath localhost:2333 {
+        header_up -Origin
+    }
+
+    forward_proxy {
+        basic_auth naive_user naive_passwd
+        hide_ip
+        hide_via
+        probe_resistance
+    }
+
+    reverse_proxy https://www.catalog.update.microsoft.com {
+        header_up Host {upstream_hostport}
+        header_up X-Forward-Host {host}
+    }
 }

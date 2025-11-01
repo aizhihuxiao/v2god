@@ -1,23 +1,27 @@
-name: Build and Push to Docker Hub
+name: Build and Deploy Web Server
 
 on:
   push:
     branches: [main, master]
-  workflow_dispatch:  # 手动触发：更新 NaiveProxy 核心和 Caddy
+    paths:
+      - 'Dockerfile'
+      - 'Caddyfile.example'
+      - '.github/workflows/docker-build.yml'
+  workflow_dispatch:  # Manual trigger for updating components
     inputs:
       caddy_version:
-        description: 'Caddy 版本 (latest 或 v2.8.4)'
+        description: 'Caddy version (latest or specific)'
         required: false
         default: 'latest'
       naive_version:
-        description: 'NaiveProxy 分支 (naive 或特定 commit)'
+        description: 'NaiveProxy version (naive or specific)'
         required: false
         default: 'naive'
       force_rebuild:
-        description: '强制重新构建 (不使用缓存)'
+        description: 'Force rebuild (no cache)'
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   build-and-push:
@@ -42,7 +46,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/caddy-nv
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/v2god
           tags: |
             type=raw,value=latest
             type=raw,value={{date 'YYYYMMDD'}}
@@ -52,6 +56,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           no-cache: ${{ github.event.inputs.force_rebuild || false }}
@@ -68,6 +73,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/caddy-nv
-          short-description: "Caddy with Cloudflare DNS support"
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/v2god
+          short-description: "V2God - Modern Web Server with Enhanced Features"
           readme-filepath: ./README.md
