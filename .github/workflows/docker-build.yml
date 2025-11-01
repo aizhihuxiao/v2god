@@ -15,9 +15,9 @@ on:
         required: false
         default: 'latest'
       plugin_version:
-        description: 'Plugin version (latest or specific)'
+        description: 'Plugin version (naive or specific)'
         required: false
-        default: 'latest'
+        default: 'naive'
       force_rebuild:
         description: 'Force rebuild (no cache)'
         required: false
@@ -65,7 +65,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             SERVER_VERSION=${{ github.event.inputs.server_version || 'latest' }}
-            PLUGIN_VERSION=${{ github.event.inputs.plugin_version || 'latest' }}
+            PLUGIN_VERSION=${{ github.event.inputs.plugin_version || 'naive' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
