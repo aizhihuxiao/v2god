@@ -6,7 +6,7 @@ RUN apk add --no-cache git
 
 # 构建自定义 Caddy，集成高级网络功能
 RUN xcaddy build \
-    --with github.com/klzgrad/forwardproxy=github.com/klzgrad/forwardproxy@naive \
+    --with github.com/caddyserver/forwardproxy@caddy2 \
     --with github.com/caddy-dns/cloudflare \
     --output /usr/bin/caddy
 
