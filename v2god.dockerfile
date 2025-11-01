@@ -76,9 +76,9 @@ USER caddy
 # 工作目录
 WORKDIR /config/caddy
 
-# 健康检查
+# 健康检查 - 使用 caddy 命令代替 wget
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:2019/config/ || exit 1
+    CMD caddy version || exit 1
 
 # 启动命令
 CMD ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
