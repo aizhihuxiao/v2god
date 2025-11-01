@@ -6,7 +6,7 @@
 			roll_size 10MB
 			roll_keep 3
 		}
-		level WARN
+		level INFO
 		format json
 	}
 }
