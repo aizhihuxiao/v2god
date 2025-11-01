@@ -1,36 +1,32 @@
-# 构建阶段 - 使用固定版本，更可靠
-FROM caddy:2.8-builder-alpine AS builder
+# 构建阶段 - 使用 Alpine 基础镜像
+FROM golang:1.23-alpine AS builder
 
-# 构建参数 - 可以在构建时覆盖
+# 构建参数 - 使用最新版本
 ARG CADDY_VERSION=latest
 ARG NAIVE_VERSION=naive
+ARG XCADDY_VERSION=v0.4.4
 
-# 安装 git 以便拉取最新代码
-RUN apk add --no-cache git
+# 设置 GOTOOLCHAIN 允许自动下载更新的 Go 版本
+ENV GOTOOLCHAIN=auto
 
-# 构建自定义 Caddy
-# 分两步：先下载依赖，再构建
-RUN xcaddy build \
-    --with github.com/caddy-dns/cloudflare
+# 安装构建依赖
+RUN apk add --no-cache git ca-certificates
 
-# 手动替换forwardproxy
-RUN cd /tmp && \
-    git clone --depth 1 -b naive https://github.com/klzgrad/forwardproxy.git && \
-    cd forwardproxy && \
-    go build -o /usr/bin/caddy-plugin ./...
+# 安装 xcaddy
+RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@${XCADDY_VERSION}
 
-# 重新构建包含forwardproxy的Caddy
-RUN xcaddy build \
+# 构建自定义 Caddy，使用最新的 NaiveProxy 核心
+RUN xcaddy build ${CADDY_VERSION} \
+    --with github.com/caddyserver/forwardproxy@caddy2=github.com/klzgrad/forwardproxy@${NAIVE_VERSION} \
     --with github.com/caddy-dns/cloudflare \
-    --replace github.com/caddyserver/forwardproxy=/tmp/forwardproxy \
     --output /usr/bin/caddy
 
 # 运行阶段 - 使用固定版本
 FROM alpine:3.19
 
 # 元数据
-LABEL maintainer="your-email@example.com" \
-      description="Caddy with NaiveProxy and Cloudflare DNS" \
+LABEL maintainer="caddy-naiveproxy" \
+      description="Caddy with NaiveProxy (latest) and Cloudflare DNS" \
       version="1.0"
 
 # 一次性安装所有依赖并创建目录，减少镜像层
