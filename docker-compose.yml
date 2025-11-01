@@ -1,13 +1,48 @@
 version: '3.8'
 
 services:
+  caddy:
+    build:
+      context: .
+      dockerfile: v2god.dockerfile
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "2019:2019"  # Caddy admin API
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certificates:/data/caddy/certificates
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./logs:/var/log/caddy
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - NAIVE_USER=${NAIVE_USER:-naive}
+      - NAIVE_PASSWORD=${NAIVE_PASSWORD}
+    networks:
+      - web-network
+    # 修复CPU配额和内存问题
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 512M
+        reservations:
+          memory: 256M
+    # 增加内核参数来解决缓冲区问题
+    sysctls:
+      - net.core.rmem_max=134217728
+      - net.core.wmem_max=134217728
+      - net.ipv4.tcp_rmem=4096 65536 134217728
+      - net.ipv4.tcp_wmem=4096 65536 134217728
+
   web-server:
     build: .
     container_name: web-app-server
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
       - "8080:8080"
     volumes:
       - ./config:/etc/server/config
@@ -64,3 +99,5 @@ volumes:
   db_data:
   cache_data:
   prometheus_data:
+  caddy_data:
+  caddy_config:
