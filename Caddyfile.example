@@ -17,20 +17,17 @@
     }
 
     route {
-        # Forward proxy configuration - 必须在最前面
+        reverse_proxy /proxyPath localhost:2333 {
+            header_up -Origin
+        }
+
         forward_proxy {
-            basic_auth naiveUser naivePasswd
+            basic_auth naive_user naive_passwd
             hide_ip
             hide_via
             probe_resistance
         }
 
-        # Internal API proxy
-        reverse_proxy /proxyPath localhost:2333 {
-            header_up -Origin
-        }
-
-        # Fallback camouflage
         reverse_proxy https://www.catalog.update.microsoft.com {
             header_up Host {upstream_hostport}
             header_up X-Forward-Host {host}
