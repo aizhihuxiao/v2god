@@ -6,7 +6,7 @@
 
 ```bash
 # 拉取最新镜像
-docker pull aizhihuxiao/v2god-caddy:latest
+docker pull aizhihuxiao/web-server:latest
 
 # 使用docker-compose启动
 docker-compose up -d
@@ -56,8 +56,8 @@ chmod +x build-and-push.sh
 ### 手动触发构建
 
 在GitHub仓库的Actions页面，可以手动触发构建并指定：
-- Caddy版本
-- NaiveProxy版本  
+- 服务器版本
+- 插件版本  
 - 是否强制重新构建
 
 ## 镜像说明
@@ -70,8 +70,8 @@ chmod +x build-and-push.sh
 ### 镜像特性
 - ✅ 基于Alpine Linux，体积小巧
 - ✅ 支持多架构 (amd64, arm64)
-- ✅ 集成最新NaiveProxy
-- ✅ 支持Cloudflare DNS
+- ✅ 集成高级网络功能
+- ✅ 支持DNS解析优化
 - ✅ 非root用户运行，安全性高
 - ✅ 内置健康检查
 - ✅ 亚洲/上海时区
@@ -81,8 +81,8 @@ chmod +x build-and-push.sh
 ### 环境变量
 ```bash
 CLOUDFLARE_API_TOKEN=your_cloudflare_token
-NAIVE_USER=naive
-NAIVE_PASSWORD=your_secure_password
+WEB_USER=webuser
+WEB_PASSWORD=your_secure_password
 ```
 
 ### 端口映射
@@ -123,6 +123,6 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 ## 更多信息
 
-- 🐳 [Docker Hub页面](https://hub.docker.com/r/aizhihuxiao/v2god-caddy)
+- 🐳 [Docker Hub页面](https://hub.docker.com/r/aizhihuxiao/web-server)
 - 📚 [项目文档](./README.md)
 - 🔧 [配置示例](./Caddyfile.example)

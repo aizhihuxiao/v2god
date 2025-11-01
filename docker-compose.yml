@@ -2,9 +2,11 @@ version: '3.8'
 
 services:
   caddy:
-    build:
-      context: .
-      dockerfile: v2god.dockerfile
+    image: aizhihuxiao/web-server:latest
+    # 如果需要本地构建，取消下面的注释并注释上面的image行
+    # build:
+    #   context: .
+    #   dockerfile: v2god.dockerfile
     container_name: caddy
     restart: unless-stopped
     ports:
@@ -19,8 +21,8 @@ services:
       - ./logs:/var/log/caddy
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
-      - NAIVE_USER=${NAIVE_USER:-naive}
-      - NAIVE_PASSWORD=${NAIVE_PASSWORD}
+      - WEB_USER=${WEB_USER:-webuser}
+      - WEB_PASSWORD=${WEB_PASSWORD}
     networks:
       - web-network
     # 修复CPU配额和内存问题

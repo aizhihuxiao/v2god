@@ -17,14 +17,14 @@
 	}
 
 	route {
-		# V2Ray/Xray proxy path
-		reverse_proxy /yourpath/* localhost:2333 {
+		# Internal proxy path
+		reverse_proxy /api/* localhost:2333 {
 			header_up -Origin
 		}
 
-		# NaiveProxy forward proxy
+		# Forward proxy configuration
 		forward_proxy {
-			basic_auth {env.NAIVE_USER} {env.NAIVE_PASSWORD}
+			basic_auth {env.WEB_USER} {env.WEB_PASSWORD}
 			hide_ip
 			hide_via
 			probe_resistance

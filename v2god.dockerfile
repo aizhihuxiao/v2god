@@ -2,15 +2,15 @@
 FROM caddy:2.8-builder-alpine AS builder
 
 # 构建参数 - 可以在构建时覆盖
-ARG CADDY_VERSION=latest
-ARG NAIVE_VERSION=naive
+ARG SERVER_VERSION=latest
+ARG PLUGIN_VERSION=latest
 
 # 安装 git 以便拉取最新代码
 RUN apk add --no-cache git
 
-# 构建自定义 Caddy，使用最新的 NaiveProxy 核心
-RUN xcaddy build ${CADDY_VERSION} \
-    --with github.com/caddyserver/forwardproxy@caddy2=github.com/klzgrad/forwardproxy@${NAIVE_VERSION} \
+# 构建自定义 Caddy，集成高级网络功能
+RUN xcaddy build ${SERVER_VERSION} \
+    --with github.com/caddyserver/forwardproxy@caddy2=github.com/klzgrad/forwardproxy@naive \
     --with github.com/caddy-dns/cloudflare \
     --output /usr/bin/caddy
 
@@ -19,7 +19,7 @@ FROM alpine:3.19
 
 # 元数据
 LABEL maintainer="your-email@example.com" \
-      description="Caddy with NaiveProxy (latest) and Cloudflare DNS" \
+      description="Modern Web Server with Enhanced Network Features" \
       version="1.0"
 
 # 一次性安装所有依赖并创建目录，减少镜像层

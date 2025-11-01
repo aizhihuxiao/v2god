@@ -1,4 +1,4 @@
-# Docker镜像构建和发布脚本 (PowerShell版本)
+# Web服务器镜像构建和发布脚本 (PowerShell版本)
 # 使用方法: .\build-and-push.ps1 [版本号]
 
 param(
@@ -9,11 +9,11 @@ param(
 $ErrorActionPreference = "Stop"
 
 # 配置
-$ImageName = "v2god-caddy"
+$ImageName = "web-server"
 $FullImageName = "$DockerUsername/$ImageName"
 $DateTag = Get-Date -Format "yyyyMMdd"
 
-Write-Host "🚀 开始构建和发布Docker镜像..." -ForegroundColor Green
+Write-Host "🚀 开始构建和发布Web服务器镜像..." -ForegroundColor Green
 Write-Host "镜像名称: $FullImageName" -ForegroundColor Cyan
 Write-Host "版本标签: $Version, $DateTag" -ForegroundColor Cyan
 Write-Host ""

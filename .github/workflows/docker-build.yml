@@ -1,4 +1,4 @@
-name: Build and Deploy V2God Caddy
+name: Build and Deploy Web Server
 
 on:
   push:
@@ -10,14 +10,14 @@ on:
       - '.github/workflows/docker-build.yml'
   workflow_dispatch:  # Manual trigger for updating components
     inputs:
-      caddy_version:
-        description: 'Caddy version (latest or v2.8.4)'
+      server_version:
+        description: 'Server version (latest or specific)'
         required: false
         default: 'latest'
-      naive_version:
-        description: 'NaiveProxy version (naive or specific commit)'
+      plugin_version:
+        description: 'Plugin version (latest or specific)'
         required: false
-        default: 'naive'
+        default: 'latest'
       force_rebuild:
         description: 'Force rebuild (no cache)'
         required: false
@@ -47,7 +47,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/v2god-caddy
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/web-server
           tags: |
             type=raw,value=latest
             type=raw,value={{date 'YYYYMMDD'}}
@@ -64,8 +64,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            CADDY_VERSION=${{ github.event.inputs.caddy_version || 'latest' }}
-            NAIVE_VERSION=${{ github.event.inputs.naive_version || 'naive' }}
+            SERVER_VERSION=${{ github.event.inputs.server_version || 'latest' }}
+            PLUGIN_VERSION=${{ github.event.inputs.plugin_version || 'latest' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
@@ -74,6 +74,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/v2god-caddy
-          short-description: "V2God - Caddy with NaiveProxy and Cloudflare DNS support"
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/web-server
+          short-description: "Modern Web Server with Enhanced Features"
           readme-filepath: ./README.md
