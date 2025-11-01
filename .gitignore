@@ -26,6 +26,14 @@ config.txt
 
 # 脚本文件（包含部署配置）
 *.sh
+*.ps1
+*.bat
+*.cmd
+
+# 构建和部署文档
+DOCKER-BUILD.md
+BUILD.md
+DEPLOY.md
 
 # 本地配置文件
 local-config.sh
