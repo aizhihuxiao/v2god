@@ -9,11 +9,11 @@ param(
 $ErrorActionPreference = "Stop"
 
 # 配置
-$ImageName = "web-server"
+$ImageName = "v2god"
 $FullImageName = "$DockerUsername/$ImageName"
 $DateTag = Get-Date -Format "yyyyMMdd"
 
-Write-Host "🚀 开始构建和发布Web服务器镜像..." -ForegroundColor Green
+Write-Host "🚀 开始构建和发布V2God镜像..." -ForegroundColor Green
 Write-Host "镜像名称: $FullImageName" -ForegroundColor Cyan
 Write-Host "版本标签: $Version, $DateTag" -ForegroundColor Cyan
 Write-Host ""

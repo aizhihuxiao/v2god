@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   caddy:
-    image: aizhihuxiao/web-server:latest
+    image: aizhihuxiao/v2god:latest
     # 如果需要本地构建，取消下面的注释并注释上面的image行
     # build:
     #   context: .

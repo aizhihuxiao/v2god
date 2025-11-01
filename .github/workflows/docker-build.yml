@@ -47,7 +47,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/web-server
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/v2god
           tags: |
             type=raw,value=latest
             type=raw,value={{date 'YYYYMMDD'}}
@@ -74,6 +74,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: ${{ secrets.DOCKERHUB_USERNAME }}/web-server
-          short-description: "Modern Web Server with Enhanced Features"
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/v2god
+          short-description: "V2God - Modern Web Server with Enhanced Features"
           readme-filepath: ./README.md

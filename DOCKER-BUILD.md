@@ -6,7 +6,7 @@
 
 ```bash
 # 拉取最新镜像
-docker pull aizhihuxiao/web-server:latest
+docker pull aizhihuxiao/v2god:latest
 
 # 使用docker-compose启动
 docker-compose up -d
@@ -123,6 +123,6 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 
 ## 更多信息
 
-- 🐳 [Docker Hub页面](https://hub.docker.com/r/aizhihuxiao/web-server)
+- 🐳 [Docker Hub页面](https://hub.docker.com/r/aizhihuxiao/v2god)
 - 📚 [项目文档](./README.md)
 - 🔧 [配置示例](./Caddyfile.example)
