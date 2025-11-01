@@ -14,11 +14,10 @@ services:
       - "443:443"
       - "2019:2019"  # Caddy admin API
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./certificates:/data/caddy/certificates
-      - caddy_data:/data
-      - caddy_config:/config
-      - ./logs:/var/log/caddy
+      - ./caddy:/etc/caddy
+      - ./data/caddy:/data/caddy
+      - ./data/caddy:/config/caddy
+      - ./logs/caddy:/var/log/caddy
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
       - WEB_USER=${WEB_USER:-webuser}

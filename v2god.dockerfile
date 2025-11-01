@@ -33,8 +33,7 @@ LABEL maintainer="caddy-naiveproxy" \
 RUN apk add --no-cache \
         ca-certificates \
         libcap \
-        tzdata \
-        wget && \
+        tzdata && \
     # 设置时区
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \

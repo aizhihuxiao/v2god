@@ -5,8 +5,7 @@ on:
     branches: [main, master]
     paths:
       - 'v2god.dockerfile'
-      - 'Caddyfile'
-      - 'docker-compose.yml'
+      - 'Caddyfile.example'
       - '.github/workflows/docker-build.yml'
   workflow_dispatch:  # Manual trigger for updating components
     inputs:
