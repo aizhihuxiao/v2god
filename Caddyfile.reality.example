@@ -1,12 +1,19 @@
 {
 	debug
 	email admin@domain
+	# 使用 Cloudflare DNS-01 验证申请泛域名证书
+	# 确保 API Token 有以下权限：
+	#   - Zone:DNS:Edit
+	#   - Zone:Zone:Read
 	acme_dns cloudflare cloudflareApiToken
 }
 
-# Caddy HTTPS 服务 - NaiveProxy (只使用泛域名证书)
+# Caddy HTTPS 服务 - NaiveProxy
+# 只监听泛域名 *.domain，不监听根域名
+# 这样只会申请泛域名证书 *.domain
 :443, *.domain {
 	route {
+		# NaiveProxy 配置
 		forward_proxy {
 			basic_auth naive_user naive_passwd
 			hide_ip
@@ -14,9 +21,9 @@
 			probe_resistance
 		}
 		
+		# 伪装站点：Microsoft Update Catalog
 		reverse_proxy https://www.catalog.update.microsoft.com {
 			header_up Host {upstream_hostport}
-			header_up X-Forwarded-Host {host}
 		}
 	}
 }
