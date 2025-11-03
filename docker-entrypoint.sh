@@ -13,8 +13,6 @@ if [ ! -f "/etc/caddy/Caddyfile" ]; then
 fi
 
 echo "📝 Caddyfile found, checking format..."
-cat /etc/caddy/Caddyfile
-echo "========================================="
 
 # 验证 Caddyfile 格式
 if ! caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile; then
@@ -31,83 +29,79 @@ echo "✅ Caddy started with PID: $CADDY_PID"
 
 # 如果存在 sing-box 配置，等待证书生成后再启动
 if [ -f "/etc/sing-box/config.json" ]; then
-    echo "� Waiting for SSL certificates to be generated..."
+    echo "🔍 Detecting and waiting for SSL certificates..."
     
-    # 从 sing-box 配置中提取证书路径
-    CERT_PATH=$(grep -o '"/data/caddy/certificates/[^"]*\.crt"' /etc/sing-box/config.json | tr -d '"' | head -1)
+    # 提取域名
+    DOMAIN=$(grep -o '"server_name"[[:space:]]*:[[:space:]]*"[^"]*"' /etc/sing-box/config.json | cut -d'"' -f4 | head -1)
+    if [ -z "$DOMAIN" ]; then
+        DOMAIN="99gtr.com"
+    fi
+    echo "📋 Domain: $DOMAIN"
     
-    if [ -n "$CERT_PATH" ]; then
-        echo "📋 Certificate path: $CERT_PATH"
+    # 最多等待 180 秒
+    WAIT_COUNT=0
+    MAX_WAIT=180
+    CERT_FOUND=false
+    
+    while [ "$CERT_FOUND" = "false" ] && [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+        # 搜索任意 CA 颁发的证书（自动适配路径）
+        ACTUAL_CERT=$(find /data/caddy/certificates -name "*.crt" -path "*/wildcard_*.${DOMAIN}/*" 2>/dev/null | head -1)
         
-        # 最多等待 180 秒
-        WAIT_COUNT=0
-        MAX_WAIT=180
+        if [ -n "$ACTUAL_CERT" ] && [ -f "$ACTUAL_CERT" ]; then
+            ACTUAL_KEY="${ACTUAL_CERT%.crt}.key"
+            
+            if [ -f "$ACTUAL_KEY" ]; then
+                echo "✅ Found certificate: $ACTUAL_CERT"
+                echo "🔧 Auto-updating sing-box config with actual certificate paths..."
+                
+                # 备份原配置
+                cp /etc/sing-box/config.json /etc/sing-box/config.json.original
+                
+                # 替换证书路径（使用实际检测到的路径）
+                sed -i "s|\"certificate_path\"[[:space:]]*:[[:space:]]*\"[^\"]*\"|\"certificate_path\": \"${ACTUAL_CERT}\"|g" /etc/sing-box/config.json
+                sed -i "s|\"key_path\"[[:space:]]*:[[:space:]]*\"[^\"]*\"|\"key_path\": \"${ACTUAL_KEY}\"|g" /etc/sing-box/config.json
+                
+                echo "✅ Certificate paths updated successfully"
+                CERT_FOUND=true
+            else
+                echo "⚠️  Certificate found but key missing: $ACTUAL_KEY"
+            fi
+        fi
         
-        while [ ! -f "$CERT_PATH" ] && [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+        if [ "$CERT_FOUND" = "false" ]; then
             sleep 2
             WAIT_COUNT=$((WAIT_COUNT + 2))
             if [ $((WAIT_COUNT % 10)) -eq 0 ]; then
-                echo "⏳ Still waiting for certificate... (${WAIT_COUNT}s/${MAX_WAIT}s)"
+                echo "⏳ Waiting for certificate... (${WAIT_COUNT}s/${MAX_WAIT}s)"
             fi
-            
-            # 每30秒检查一次是否有其他CA的证书
-            if [ $((WAIT_COUNT % 30)) -eq 0 ]; then
-                ACTUAL_CERT=$(find /data/caddy/certificates -name "*.crt" -path "*/wildcard_*.99gtr.com/*" 2>/dev/null | head -1)
-                if [ -n "$ACTUAL_CERT" ] && [ -f "$ACTUAL_CERT" ]; then
-                    echo "📋 Found certificate at different path: $ACTUAL_CERT"
-                    echo "🔧 Auto-fixing certificate path in config..."
-                    
-                    ACTUAL_KEY="${ACTUAL_CERT%.crt}.key"
-                    
-                    # 动态更新配置文件中的证书路径
-                    cp /etc/sing-box/config.json /etc/sing-box/config.json.bak
-                    sed -i "s|/data/caddy/certificates/.*/wildcard_[^/]*/wildcard_[^\"]*\.crt|${ACTUAL_CERT}|g" /etc/sing-box/config.json
-                    sed -i "s|/data/caddy/certificates/.*/wildcard_[^/]*/wildcard_[^\"]*\.key|${ACTUAL_KEY}|g" /etc/sing-box/config.json
-                    
-                    CERT_PATH="$ACTUAL_CERT"
-                    echo "✅ Certificate path updated to: $CERT_PATH"
-                    break
-                fi
-            fi
-        done
-        
-        if [ -f "$CERT_PATH" ]; then
-            echo "✅ Certificate found! Starting sing-box..."
-            
-            # 确保日志目录存在
-            mkdir -p /var/log/sing-box
-            
-            # 启动 sing-box
-            sing-box run -c /etc/sing-box/config.json > /var/log/sing-box/sing-box.log 2>&1 &
-            SINGBOX_PID=$!
-            echo "✅ sing-box started with PID: $SINGBOX_PID"
-            
-            # 验证 sing-box 启动成功
-            sleep 3
-            if kill -0 $SINGBOX_PID 2>/dev/null; then
-                echo "✅ sing-box is running successfully!"
-            else
-                echo "❌ sing-box failed to start! Logs:"
-                cat /var/log/sing-box/sing-box.log
-                echo "⚠️  Continuing with Caddy only..."
-            fi
-        else
-            echo "⚠️  Timeout waiting for certificate after ${MAX_WAIT}s"
-            echo "💡 sing-box will not start. You can manually restart the container after certificates are issued."
-            echo "💡 Check certificate status: docker exec caddy ls -la /data/caddy/certificates/"
         fi
-    else
-        echo "⚠️  Could not extract certificate path from sing-box config"
-        echo "🚀 Attempting to start sing-box anyway..."
+    done
+    
+    if [ "$CERT_FOUND" = "true" ]; then
+        echo "🚀 Starting sing-box with auto-detected certificate..."
+        
+        # 确保日志目录存在
         mkdir -p /var/log/sing-box
+        
+        # 启动 sing-box
         sing-box run -c /etc/sing-box/config.json > /var/log/sing-box/sing-box.log 2>&1 &
         SINGBOX_PID=$!
-        sleep 2
-        if ! kill -0 $SINGBOX_PID 2>/dev/null; then
+        echo "✅ sing-box started with PID: $SINGBOX_PID"
+        
+        # 验证启动成功
+        sleep 3
+        if kill -0 $SINGBOX_PID 2>/dev/null; then
+            echo "✅ sing-box is running successfully!"
+        else
             echo "❌ sing-box failed to start! Logs:"
-            cat /var/log/sing-box/sing-box.log
+            cat /var/log/sing-box/sing-box.log 2>/dev/null || echo "No log file"
             echo "⚠️  Continuing with Caddy only..."
         fi
+    else
+        echo "⚠️  Timeout waiting for certificate after ${MAX_WAIT}s"
+        echo "💡 sing-box will not start. Certificate may still be pending."
+        echo "💡 Check: docker exec caddy ls -la /data/caddy/certificates/"
+        echo "💡 Restart container later: docker restart caddy"
     fi
 else
     echo "⚠️  sing-box config not found at /etc/sing-box/config.json, skipping..."
