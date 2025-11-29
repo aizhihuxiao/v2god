@@ -1,0 +1,35 @@
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "anytls",
+      "tag": "anytls-in",
+      "listen": "::",
+      "listen_port": {{ANYTLS_PORT}},
+      "users": [
+        {
+          "name": "{{ANYTLS_USER}}",
+          "password": "{{ANYTLS_PASSWORD}}"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "{{ANYTLS_SNI}}",
+        "certificate_path": "/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/wildcard_.{{DOMAIN}}/wildcard_.{{DOMAIN}}.crt",
+        "key_path": "/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/wildcard_.{{DOMAIN}}/wildcard_.{{DOMAIN}}.key"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

@@ -1,0 +1,45 @@
+{
+	debug
+	email admin@{{DOMAIN}}
+	
+	# 多 ACME CA 支持 - 随机选择以分散请求限制
+	# 可选值: letsencrypt, zerossl, buypass, google, sslcom
+	# 使用方法: 在部署脚本中设置 ACME_CA 变量，或使用默认值 letsencrypt
+	# 
+	# 各 CA 的速率限制参考:
+	#   Let's Encrypt:  50 证书/域名/周, 5 重复证书/周
+	#   ZeroSSL:        无限制（需要 EAB）
+	#   Buypass:        20 证书/域名/周
+	#   Google Trust:   无限制（需要 EAB）
+	#   SSL.com:        需要账户
+	#
+	# 注意: ZeroSSL 和 Google Trust Services 需要 EAB 凭据
+	# 如果遇到限制，可以切换不同的 CA
+	
+	# 使用 Cloudflare DNS-01 验证申请泛域名证书
+	acme_dns cloudflare {{CLOUDFLARE_API_TOKEN}}
+	
+	# ACME CA 配置（由部署脚本替换）
+	# 默认使用 Let's Encrypt
+	{{ACME_CA_CONFIG}}
+}
+
+# Caddy HTTPS 服务 - NaiveProxy
+# 只监听泛域名 *.{{DOMAIN}}，不监听根域名
+# 这样只会申请泛域名证书 *.{{DOMAIN}}
+:443, *.{{DOMAIN}} {
+	route {
+		# NaiveProxy 配置
+		forward_proxy {
+			basic_auth {{NAIVE_USER}} {{NAIVE_PASSWD}}
+			hide_ip
+			hide_via
+			probe_resistance
+		}
+		
+		# 伪装站点：Microsoft Update Catalog
+		reverse_proxy https://www.catalog.update.microsoft.com {
+			header_up Host {upstream_hostport}
+		}
+	}
+}

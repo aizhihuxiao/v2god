@@ -1,0 +1,46 @@
+# Git
+.git/
+
+# Docker
+.dockerignore
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 部署脚本（包含敏感配置）
+deploy.sh
+run.sh
+build-and-push.sh
+
+# 敏感配置文件（部署时生成）
+caddy/Caddyfile
+caddy/data/
+caddy/config/
+caddy/logs/
+singbox/
+*.env
+config.txt
+
+# 证书文件（敏感）
+certificates/
+*.crt
+*.key
+*.pem
+
+# 临时文件和备份
+*.tmp
+*.bak
+*.old
+*.backup.*
+*.rar
+*.zip
+*.tar.gz
