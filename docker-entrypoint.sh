@@ -7,7 +7,7 @@ set -e
 # 更新: 2025-12-05
 # =========================================
 # 
-# 支持的部署模式：
+# 支持的部署模式:
 #   - NaiveProxy Only (仅 Caddy)
 #   - NaiveProxy + AnyTLS (Caddy + sing-box 真实证书)
 #   - NaiveProxy + AnyReality (Caddy + sing-box Reality)
@@ -55,7 +55,7 @@ if [ -f "/etc/sing-box/config.json" ]; then
     echo ""
     echo "🔍 Detecting sing-box configuration..."
     
-    # 复制配置到可写位置（解决只读挂载问题）
+    # 复制配置到可写位置，解决只读挂载问题
     cp /etc/sing-box/config.json /tmp/sing-box-config.json
     
     # 检测是否为 Reality 模式（无需等待证书）
@@ -67,7 +67,7 @@ if [ -f "/etc/sing-box/config.json" ]; then
         fi
     fi
     
-    # 检测是否需要证书（AnyTLS 模式）
+    # 检测是否需要证书 (AnyTLS 模式)
     NEEDS_CERT=false
     if grep -q '"certificate_path"' /tmp/sing-box-config.json; then
         NEEDS_CERT=true
@@ -130,7 +130,7 @@ if [ -f "/etc/sing-box/config.json" ]; then
             cert=$(find /data/caddy/certificates -name "*.crt" 2>/dev/null | grep -i "${ROOT_DOMAIN}" | head -1)
             if [ -n "$cert" ] && [ -f "$cert" ]; then echo "$cert"; return 0; fi
             
-            # 策略5: 任意有效证书（最后备选）
+            # 策略5: 任意有效证书（最后手段）
             cert=$(find /data/caddy/certificates -name "*.crt" -type f 2>/dev/null | head -1)
             if [ -n "$cert" ] && [ -f "$cert" ]; then echo "$cert"; return 0; fi
             
