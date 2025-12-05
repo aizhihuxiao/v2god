@@ -146,8 +146,22 @@ if [ -f "/etc/sing-box/config.json" ]; then
         echo "🔍 Checking for existing certificates..."
         ACTUAL_CERT=$(find_certificate)
         if [ -n "$ACTUAL_CERT" ] && [ -f "$ACTUAL_CERT" ]; then
-            echo "✅ Found existing certificate immediately!"
-        else
+            ACTUAL_KEY="${ACTUAL_CERT%.crt}.key"
+            if [ -f "$ACTUAL_KEY" ]; then
+                echo "✅ Found existing certificate: $ACTUAL_CERT"
+                echo "✅ Found existing key: $ACTUAL_KEY"
+                echo "🔧 Updating sing-box config with certificate paths..."
+                
+                # 替换证书路径
+                sed -i "s|\"certificate_path\"[[:space:]]*:[[:space:]]*\"[^\"]*\"|\"certificate_path\": \"${ACTUAL_CERT}\"|g" /tmp/sing-box-config.json
+                sed -i "s|\"key_path\"[[:space:]]*:[[:space:]]*\"[^\"]*\"|\"key_path\": \"${ACTUAL_KEY}\"|g" /tmp/sing-box-config.json
+                
+                echo "✅ Certificate paths updated"
+                CERT_FOUND=true
+            fi
+        fi
+        
+        if [ "$CERT_FOUND" = "false" ]; then
             echo "⏳ No existing cert found, waiting for Caddy to request certificate..."
             sleep 10
             WAIT_COUNT=10
