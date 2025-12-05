@@ -1,65 +1,23 @@
-# Git
-.git/
-
 # =========================================
-# Docker 必要文件 (保留)
+# V2God Docker 仓库 - Git 忽略配置
 # =========================================
-# - Dockerfile
-# - docker-entrypoint.sh
-# - Caddyfile.*.example
-# - singbox-config.*.example
-# - .github/workflows/
-
-# =========================================
-# 排除所有其他文件
+# 仅保留 Docker 构建必需的文件：
+#   - Dockerfile
+#   - docker-entrypoint.sh
+#   - .github/workflows/
 # =========================================
 
-# Markdown 文档
-*.md
+# =========================================
+# 排除所有文件，然后逐个添加需要的
+# =========================================
+*
 
-# Shell 脚本 (除了 docker-entrypoint.sh)
-*.sh
+# =========================================
+# Docker 构建必需文件 (不忽略)
+# =========================================
+!Dockerfile
 !docker-entrypoint.sh
-
-# Docker
-.dockerignore
-*.log
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# 敏感配置文件
-v2god.conf
-
-# 敏感配置文件（部署时生成）
-caddy/Caddyfile
-caddy/data/
-caddy/config/
-caddy/logs/
-caddy/deploy-info.txt
-singbox/
-*.env
-config.txt
-
-# 证书文件（敏感）
-certificates/
-*.crt
-*.key
-*.pem
-
-# 临时文件和备份
-*.tmp
-*.bak
-*.old
-*.backup.*
-*.rar
-*.zip
-*.tar.gz
+!.github/
+!.github/**
+!.gitignore
+!.gitattributes
