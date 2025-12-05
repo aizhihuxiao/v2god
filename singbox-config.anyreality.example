@@ -1,0 +1,45 @@
+{
+  "log": {
+    "level": "info",
+    "timestamp": true
+  },
+  "inbounds": [
+    {
+      "type": "anytls",
+      "tag": "anyreality-in",
+      "listen": "::",
+      "listen_port": {{ANYREALITY_PORT}},
+      "users": [
+        {
+          "name": "{{ANYREALITY_USER}}",
+          "password": "{{ANYREALITY_PASSWORD}}"
+        }
+      ],
+      "tls": {
+        "enabled": true,
+        "server_name": "{{ANYREALITY_SNI}}",
+        "reality": {
+          "enabled": true,
+          "handshake": {
+            "server": "{{ANYREALITY_TARGET}}",
+            "server_port": 443
+          },
+          "private_key": "{{ANYREALITY_PRIVATE_KEY}}",
+          "short_id": [
+            "{{ANYREALITY_SHORT_ID}}"
+          ],
+          "max_time_difference": "1m"
+        }
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "route": {
+    "final": "direct"
+  }
+}

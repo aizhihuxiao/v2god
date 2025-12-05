@@ -1,0 +1,139 @@
+# =========================================
+# V2God Caddyfile - Layer4 SNI 分流配置
+# 版本: 2.0.0
+# 更新: 2025-12-05
+# =========================================
+#
+# 此配置使用 Caddy Layer4 实现 443 端口共享：
+#   - NaiveProxy: *.{{DOMAIN}} (TLS 终止后 HTTP 处理)
+#   - AnyTLS: graph.microsoft.com (透传到 sing-box :8443)
+#   - AnyReality: security.microsoft.com (透传到 sing-box :8444)
+#
+# 架构图：
+# ┌─────────────────────────────────────────────────────────────┐
+# │                    Caddy Layer4 (:443)                      │
+# │                                                             │
+# │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐ │
+# │  │ graph.microsoft │  │security.microsoft│  │ *.domain   │ │
+# │  │     .com        │  │      .com        │  │            │ │
+# │  └────────┬────────┘  └────────┬─────────┘  └──────┬─────┘ │
+# │           │ (透传)             │ (透传)            │ (终止) │
+# └───────────┼────────────────────┼───────────────────┼───────┘
+#             ▼                    ▼                   ▼
+#      ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+#      │  sing-box    │    │  sing-box    │    │ Caddy HTTP   │
+#      │  AnyTLS      │    │  AnyReality  │    │ NaiveProxy   │
+#      │  :8443       │    │  :8444       │    │ :8080        │
+#      └──────────────┘    └──────────────┘    └──────────────┘
+#
+# =========================================
+
+{
+	# 生产环境建议关闭 debug
+	# debug
+	
+	email admin@{{DOMAIN}}
+	
+	# 使用 Cloudflare DNS-01 验证申请泛域名证书
+	acme_dns cloudflare {{CLOUDFLARE_API_TOKEN}}
+	
+	# ACME CA 配置（由部署脚本替换）
+	{{ACME_CA_CONFIG}}
+	
+	# =========================================
+	# Layer4 应用配置 - SNI 分流
+	# =========================================
+	layer4 {
+		# 监听 443 端口，根据 TLS SNI 分流
+		:443 {
+			@anytls tls sni graph.microsoft.com
+			@anyreality tls sni security.microsoft.com
+			@naive tls sni *.{{DOMAIN}}
+			
+			# AnyTLS 流量 - 透传到 sing-box 8443 端口
+			route @anytls {
+				proxy {
+					upstream localhost:8443
+				}
+			}
+			
+			# AnyReality 流量 - 透传到 sing-box 8444 端口
+			route @anyreality {
+				proxy {
+					upstream localhost:8444
+				}
+			}
+			
+			# NaiveProxy 流量 - TLS 终止后交给 HTTP 处理
+			route @naive {
+				tls {
+					connection_policy {
+						alpn h2 http/1.1
+					}
+				}
+				proxy {
+					upstream localhost:8080
+				}
+			}
+			
+			# 默认路由 - 未匹配的流量也走 NaiveProxy
+			route {
+				tls {
+					connection_policy {
+						alpn h2 http/1.1
+					}
+				}
+				proxy {
+					upstream localhost:8080
+				}
+			}
+		}
+	}
+}
+
+# =========================================
+# HTTP 服务 - NaiveProxy (内部端口 8080)
+# =========================================
+# 接收 Layer4 终止 TLS 后的明文 HTTP 流量
+# =========================================
+
+:8080 {
+	route {
+		# NaiveProxy 配置
+		forward_proxy {
+			basic_auth {{NAIVE_USER}} {{NAIVE_PASSWD}}
+			hide_ip
+			hide_via
+			probe_resistance
+		}
+		
+		# 伪装站点：Microsoft Update Catalog
+		reverse_proxy https://www.catalog.update.microsoft.com {
+			header_up Host {upstream_hostport}
+			header_up X-Real-IP {remote_host}
+		}
+	}
+	
+	# 访问日志
+	log {
+		output file /var/log/caddy/naive-access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# =========================================
+# HTTPS 服务 - 证书管理 (仅用于申请证书)
+# =========================================
+# 此站点仅用于触发 Caddy 申请泛域名证书
+# 实际流量由 Layer4 处理
+# =========================================
+
+https://cert.{{DOMAIN}} {
+	tls {
+		dns cloudflare {{CLOUDFLARE_API_TOKEN}}
+	}
+	
+	respond "V2God Certificate Manager" 200
+}

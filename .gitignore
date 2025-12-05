@@ -1,0 +1,65 @@
+# Git
+.git/
+
+# =========================================
+# Docker 必要文件 (保留)
+# =========================================
+# - Dockerfile
+# - docker-entrypoint.sh
+# - Caddyfile.*.example
+# - singbox-config.*.example
+# - .github/workflows/
+
+# =========================================
+# 排除所有其他文件
+# =========================================
+
+# Markdown 文档
+*.md
+
+# Shell 脚本 (除了 docker-entrypoint.sh)
+*.sh
+!docker-entrypoint.sh
+
+# Docker
+.dockerignore
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 敏感配置文件
+v2god.conf
+
+# 敏感配置文件（部署时生成）
+caddy/Caddyfile
+caddy/data/
+caddy/config/
+caddy/logs/
+caddy/deploy-info.txt
+singbox/
+*.env
+config.txt
+
+# 证书文件（敏感）
+certificates/
+*.crt
+*.key
+*.pem
+
+# 临时文件和备份
+*.tmp
+*.bak
+*.old
+*.backup.*
+*.rar
+*.zip
+*.tar.gz
