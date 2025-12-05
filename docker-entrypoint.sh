@@ -142,9 +142,16 @@ if [ -f "/etc/sing-box/config.json" ]; then
         MAX_WAIT=180
         CERT_FOUND=false
         
-        echo "⏳ Waiting 10s for Caddy to initialize certificate request..."
-        sleep 10
-        WAIT_COUNT=10
+        # 首先检查是否已有证书（避免无谓等待）
+        echo "🔍 Checking for existing certificates..."
+        ACTUAL_CERT=$(find_certificate)
+        if [ -n "$ACTUAL_CERT" ] && [ -f "$ACTUAL_CERT" ]; then
+            echo "✅ Found existing certificate immediately!"
+        else
+            echo "⏳ No existing cert found, waiting for Caddy to request certificate..."
+            sleep 10
+            WAIT_COUNT=10
+        fi
         
         while [ "$CERT_FOUND" = "false" ] && [ $WAIT_COUNT -lt $MAX_WAIT ]; do
             ACTUAL_CERT=$(find_certificate)
