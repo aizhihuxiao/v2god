@@ -37,10 +37,7 @@
             "server_port": 443
           },
           "private_key": "{{ANYREALITY_PRIVATE_KEY}}",
-          "short_id": [
-            "{{ANYREALITY_SHORT_ID}}"
-          ],
-          "max_time_difference": "1m"
+          "short_id": "{{ANYREALITY_SHORT_ID}}"
         }
       }
     }
