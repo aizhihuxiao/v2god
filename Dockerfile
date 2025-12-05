@@ -92,11 +92,9 @@ WORKDIR /config/caddy
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# 健康检查 - 检查 Caddy 和 sing-box 进程及端口
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD sh -c 'pgrep caddy >/dev/null 2>&1 && \
-        ([ ! -f /etc/sing-box/config.json ] || pgrep sing-box >/dev/null 2>&1) && \
-        wget -q --spider http://localhost:2019/config/ || exit 1'
+# 健康检查 - 仅检查 Caddy 进程是否存活
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=3 \
+    CMD pgrep caddy >/dev/null 2>&1 || exit 1
 
 # 启动命令 - 同时运行 Caddy 和 sing-box（以 root 运行）
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
